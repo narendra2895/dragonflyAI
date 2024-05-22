@@ -6,10 +6,20 @@
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
+    "assert": "^2.1.0",
+    "axios": "^1.7.2",
+    "http-proxy-middleware": "^3.0.0",
+    "https-browserify": "^1.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-dropzone": "^14.2.3",
     "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+    "stream-browserify": "^3.0.0",
+    "stream-http": "^3.2.0",
+    "url": "^0.11.3",
+    "util": "^0.12.5",
+    "web-vitals": "^2.1.4",
+    "zlib-browserify": "^0.0.3"
   },
   "scripts": {
     "start": "react-scripts start",
