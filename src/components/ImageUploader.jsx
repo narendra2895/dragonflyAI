@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
+import { confirmAlert } from 'react-confirm-alert';
 import 'react-toastify/dist/ReactToastify.css';
+import 'react-confirm-alert/src/react-confirm-alert.css';
 import Compressor from 'compressorjs';
 import './ImageUploader.css';
 
@@ -12,17 +14,49 @@ const ImageUploader = () => {
   const [loading, setLoading] = useState(false);
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB limit
 
-  const API_BASE_URL = '/api/'; // Use relative path for serverless function
-
   const handleFileChange = async (e) => {
-    const selectedFiles = Array.from(e.target.files);
-    handleFiles(selectedFiles);
+    const selectedFiles = Array.from(e.target.files).filter(file => file.type.startsWith('image/'));
+    if (files.length > 0) {
+      confirmAlert({
+        title: 'Add or Discard Images',
+        message: 'Do you want to add the new images to the previously added images and keep them, or discard the previous images?',
+        buttons: [
+          {
+            label: 'Add',
+            onClick: () => handleFiles([...files, ...selectedFiles])
+          },
+          {
+            label: 'Discard',
+            onClick: () => handleFiles(selectedFiles)
+          }
+        ]
+      });
+    } else {
+      handleFiles(selectedFiles);
+    }
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
-    const droppedFiles = Array.from(e.dataTransfer.files);
-    handleFiles(droppedFiles);
+    const droppedFiles = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+    if (files.length > 0) {
+      confirmAlert({
+        title: 'Add or Discard Images',
+        message: 'Do you want to add the new images to the previously added images and keep them, or discard the previous images?',
+        buttons: [
+          {
+            label: 'Add',
+            onClick: () => handleFiles([...files, ...droppedFiles])
+          },
+          {
+            label: 'Discard',
+            onClick: () => handleFiles(droppedFiles)
+          }
+        ]
+      });
+    } else {
+      handleFiles(droppedFiles);
+    }
   };
 
   const handleFiles = async (selectedFiles) => {
@@ -46,8 +80,8 @@ const ImageUploader = () => {
         compressedFiles.push(compressedFile);
       }
       setFiles(compressedFiles);
-    } catch (err) {
-      toast.error(`Compression error: ${err.message}`, { autoClose: 10000 });
+    } catch (error) {
+      toast.error(`Compression error: ${error.message}`, { autoClose: 10000 });
     }
   };
 
@@ -71,7 +105,7 @@ const ImageUploader = () => {
     }
 
     try {
-      const res = await axios.post(`${API_BASE_URL}/pipeline/assets/stage`, { count: files.length });
+      const res = await axios.post('http://localhost:5173/pipeline/assets/stage', { count: files.length });
       console.log('Stage Response:', res.data);
 
       if (!res.data || !res.data.responses) {
@@ -104,7 +138,7 @@ const ImageUploader = () => {
       const processPromises = uploadResults.map(async (result) => {
         if (result.status === 'uploaded') {
           try {
-            const processRes = await axios.post(`${API_BASE_URL}/pipeline/assets/process`, {
+            const processRes = await axios.post('http://localhost:5173/pipeline/assets/process', {
               key: result.key,
               pipeline: 'dragonfly-img-basic'
             });
@@ -134,7 +168,7 @@ const ImageUploader = () => {
     const statusPromises = processResults.map(async (result) => {
       if (result.status === 'running') {
         try {
-          const statusRes = await axios.post(`${API_BASE_URL}/pipeline/assets/status`, { taskId: result.taskId });
+          const statusRes = await axios.post('http://localhost:5173/pipeline/assets/status', { taskId: result.taskId });
           return { ...result, status: statusRes.data.status };
         } catch (error) {
           const errorMessage = handleApiError(error);
@@ -153,12 +187,16 @@ const ImageUploader = () => {
       setLoading(false);
       statuses.forEach(status => {
         if (status.status === 'SUCCEEDED') {
-          toast.success(`File ${status.fileName} with key ${status.key} processed successfully!`, { autoClose: 10000 });
+          toast.success(` ${status.fileName} with key ${status.key} processed successfully!`, { autoClose: 10000 });
         } else if (status.status === 'error') {
-          toast.error(`Error processing file ${status.fileName} with key ${status.key}: ${status.error}`, { autoClose: 10000 });
+          toast.error(`Error processing  ${status.fileName} with key ${status.key}: ${status.error}`, { autoClose: 10000 });
         }
       });
     }
+  };
+
+  const openFileDialog = () => {
+    document.getElementById('fileInput').click();
   };
 
   return (
@@ -171,7 +209,7 @@ const ImageUploader = () => {
       >
         {files.length === 0 ? (
           <div className="placeholder">
-            <p>Click "Upload Files" or drag and drop files into the box</p>
+            <p>Click "Choose Files" or drag and drop files into the box</p>
           </div>
         ) : (
           files.map((file, index) => (
@@ -181,8 +219,17 @@ const ImageUploader = () => {
           ))
         )}
       </div>
-      <input type="file" multiple accept="image/jpeg,image/png" onChange={handleFileChange} />
-      <button onClick={uploadFiles}>Upload Files</button>
+      <div className='buttons-div'>
+        <div>
+
+        <button className='custom-button' onClick={openFileDialog}>Choose Files </button>
+        <span>{files.length} file(s) selected</span>
+        <input id="fileInput" type="file" multiple accept="image/jpeg,image/png" style={{ display: 'none' }} onChange={handleFileChange} />
+        </div>
+        
+        <button className='custom-button' onClick={uploadFiles}>Upload Files</button>
+      </div>
+      
       {loading && (
         <div className="loading-overlay">
           <div className="spinner"></div>

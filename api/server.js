@@ -1,3 +1,5 @@
+require('dotenv').config( { path: '../.env' });
+
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
@@ -10,8 +12,10 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const API_KEY = process.env.REACT_APP_API_KEY;
-const BASE_URL = process.env.REACT_APP_BASE_URL;
+
+
+const API_KEY = process.env.API_KEY;
+const BASE_URL = process.env.BASE_URL ;
 
 app.post('/pipeline/assets/stage', async (req, res) => {
   const { count } = req.body;
@@ -81,5 +85,8 @@ app.post('/pipeline/assets/status', async (req, res) => {
 });
 
 app.listen(PORT, () => {
+  const x = process.env.API_KEY
+  const y = process.env.BASE_URL
+  console.log(x, 'is this /n ',y)
   console.log(`Server running on port ${PORT}`);
 });
