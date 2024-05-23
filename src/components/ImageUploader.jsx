@@ -12,7 +12,8 @@ const ImageUploader = () => {
   const [loading, setLoading] = useState(false);
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB limit
 
-  console.log(responses)
+  const API_BASE_URL = '/api/'; // Use relative path for serverless function
+
   const handleFileChange = async (e) => {
     const selectedFiles = Array.from(e.target.files);
     handleFiles(selectedFiles);
@@ -70,7 +71,7 @@ const ImageUploader = () => {
     }
 
     try {
-      const res = await axios.post('http://localhost:5173/pipeline/assets/stage', { count: files.length });
+      const res = await axios.post(`${API_BASE_URL}/pipeline/assets/stage`, { count: files.length });
       console.log('Stage Response:', res.data);
 
       if (!res.data || !res.data.responses) {
@@ -103,7 +104,7 @@ const ImageUploader = () => {
       const processPromises = uploadResults.map(async (result) => {
         if (result.status === 'uploaded') {
           try {
-            const processRes = await axios.post('http://localhost:5173/pipeline/assets/process', {
+            const processRes = await axios.post(`${API_BASE_URL}/pipeline/assets/process`, {
               key: result.key,
               pipeline: 'dragonfly-img-basic'
             });
@@ -133,7 +134,7 @@ const ImageUploader = () => {
     const statusPromises = processResults.map(async (result) => {
       if (result.status === 'running') {
         try {
-          const statusRes = await axios.post('http://localhost:5173/pipeline/assets/status', { taskId: result.taskId });
+          const statusRes = await axios.post(`${API_BASE_URL}/pipeline/assets/status`, { taskId: result.taskId });
           return { ...result, status: statusRes.data.status };
         } catch (error) {
           const errorMessage = handleApiError(error);
@@ -152,9 +153,9 @@ const ImageUploader = () => {
       setLoading(false);
       statuses.forEach(status => {
         if (status.status === 'SUCCEEDED') {
-          toast.success(` ${status.fileName} with key ${status.key} processed successfully!`, { autoClose: 10000 });
+          toast.success(`File ${status.fileName} with key ${status.key} processed successfully!`, { autoClose: 10000 });
         } else if (status.status === 'error') {
-          toast.error(`Error processing  ${status.fileName} with key ${status.key}: ${status.error}`, { autoClose: 10000 });
+          toast.error(`Error processing file ${status.fileName} with key ${status.key}: ${status.error}`, { autoClose: 10000 });
         }
       });
     }
@@ -170,7 +171,7 @@ const ImageUploader = () => {
       >
         {files.length === 0 ? (
           <div className="placeholder">
-            <p>Click "Choose Files" or drag and drop files into the box</p>
+            <p>Click "Upload Files" or drag and drop files into the box</p>
           </div>
         ) : (
           files.map((file, index) => (
@@ -180,11 +181,8 @@ const ImageUploader = () => {
           ))
         )}
       </div>
-      <div className='buttons-div'>
-      <input  type="file" multiple accept="image/jpeg,image/png" onChange={handleFileChange} />
-      <button className='custom-button' onClick={uploadFiles}>Upload Files</button>
-      </div>
-      
+      <input type="file" multiple accept="image/jpeg,image/png" onChange={handleFileChange} />
+      <button onClick={uploadFiles}>Upload Files</button>
       {loading && (
         <div className="loading-overlay">
           <div className="spinner"></div>
