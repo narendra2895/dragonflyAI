@@ -70,7 +70,7 @@ const ImageUploader = () => {
     }
 
     try {
-      const res = await axios.post('http://dragonfly-kupfjxt78-narendras-projects-f899ec42.vercel.app:5173/pipeline/assets/stage', { count: files.length });
+      const res = await axios.post('http://localhost:5173/pipeline/assets/stage', { count: files.length });
       console.log('Stage Response:', res.data);
 
       if (!res.data || !res.data.responses) {
@@ -103,7 +103,7 @@ const ImageUploader = () => {
       const processPromises = uploadResults.map(async (result) => {
         if (result.status === 'uploaded') {
           try {
-            const processRes = await axios.post('http://dragonfly-kupfjxt78-narendras-projects-f899ec42.vercel.app:5173/pipeline/assets/process', {
+            const processRes = await axios.post('http://localhost:5173/pipeline/assets/process', {
               key: result.key,
               pipeline: 'dragonfly-img-basic'
             });
@@ -133,7 +133,7 @@ const ImageUploader = () => {
     const statusPromises = processResults.map(async (result) => {
       if (result.status === 'running') {
         try {
-          const statusRes = await axios.post('http://dragonfly-kupfjxt78-narendras-projects-f899ec42.vercel.app:5173/pipeline/assets/status', { taskId: result.taskId });
+          const statusRes = await axios.post('http://localhost:5173/pipeline/assets/status', { taskId: result.taskId });
           return { ...result, status: statusRes.data.status };
         } catch (error) {
           const errorMessage = handleApiError(error);
