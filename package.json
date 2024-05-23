@@ -28,7 +28,9 @@
     "zlib-browserify": "^0.0.3"
   },
   "scripts": {
-    "start": "react-scripts start && node server.js",
+    "start": "concurrently \"npm run start-client\" \"npm run start-server\"",
+    "start-client": "react-scripts start",
+    "start-server": "cd api && node server.js",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
