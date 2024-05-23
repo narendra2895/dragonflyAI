@@ -1,0 +1,107 @@
+.previews {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: 500px;
+  /* min-height: 50px; */
+  height: 20rem;
+  overflow: scroll; /* Hide scroll bar */
+  /* border: 1px solid black; */
+  border-radius: 3rem;
+  margin: 1rem auto;
+  /* margin-top: 5rem; */
+  box-shadow: 5px 5px 5px 5px rgba(0, 0, 0, 0.1);
+gap: 1rem;
+  padding-right: 15px; /* Add padding to accommodate hidden scrollbar */
+  justify-content: center;
+  align-items: center;
+}
+
+/* For webkit browsers (Chrome, Safari, etc.) */
+.previews::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.placeholder{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  color: grey;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.previews-content {
+  overflow-y: scroll; /* Enable vertical scroll */
+  overflow-x: hidden; /* Disable horizontal scroll */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none; /* Firefox */
+}
+
+/* For webkit browsers (Chrome, Safari, etc.) */
+.previews-content::-webkit-scrollbar {
+  display: none;
+}
+
+.previews img{
+  width: 100px;
+  height: 100px;
+  margin: 0 auto;
+}
+.preview {
+  margin: 10px;
+  /* flex: 1 1 auto; */
+  text-align: center;
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.spinner {
+  border: 16px solid #f3f3f3; /* Light grey */
+  border-top: 16px solid #3498db; /* Blue */
+  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.buttons-div{
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+.custom-button{
+  padding: 0.5rem 1rem;
+  text-align: center;
+  color: white;
+  background: black;
+  border-radius: 0.4rem;
+}
+
+.custom-button:last-child:hover{
+  transform: scale(1.1);
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.116);
+  /* background: rgba(0, 0, 0, 0.808); */
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+}
