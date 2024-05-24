@@ -12,55 +12,24 @@ const ImageUploader = () => {
   const [errors, setErrors] = useState([]);
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB limit
+  const MAX_WIDTH = 3000; // Maximum allowed width: 3000px
+  const MAX_HEIGHT = 2000; // Maximum allowed height: 2000px
 
   const handleFileChange = async (e) => {
     const selectedFiles = Array.from(e.target.files).filter(file => file.type.startsWith('image/'));
-    if (files.length > 0) {
-      confirmAlert({
-        title: 'Add or Discard Images',
-        message: 'Do you want to add the new images to the previously added images and keep them, or discard the previous images?',
-        buttons: [
-          {
-            label: 'Add',
-            onClick: () => handleFiles([...files, ...selectedFiles])
-          },
-          {
-            label: 'Discard',
-            onClick: () => handleFiles(selectedFiles)
-          }
-        ]
-      });
-    } else {
-      handleFiles(selectedFiles);
-    }
+    handleFiles(selectedFiles);
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
     const droppedFiles = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
-    if (files.length > 0) {
-      confirmAlert({
-        title: 'Add or Discard Images',
-        message: 'Do you want to add the new images to the previously added images and keep them, or discard the previous images?',
-        buttons: [
-          {
-            label: 'Add',
-            onClick: () => handleFiles([...files, ...droppedFiles])
-          },
-          {
-            label: 'Discard',
-            onClick: () => handleFiles(droppedFiles)
-          }
-        ]
-      });
-    } else {
-      handleFiles(droppedFiles);
-    }
+    handleFiles(droppedFiles);
   };
 
   const handleFiles = async (selectedFiles) => {
+    setFiles([]); // Clear previous files
     const compressedFiles = [];
+    const excludedFiles = [];
 
     const compressFile = (file) => new Promise((resolve, reject) => {
       new Compressor(file, {
@@ -70,15 +39,31 @@ const ImageUploader = () => {
       });
     });
 
+    const getImageDimensions = (file) => new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = () => {
+        resolve({ width: img.width, height: img.height });
+      };
+      img.onerror = reject;
+    });
+
     try {
       for (const file of selectedFiles) {
-        if (file.size > MAX_FILE_SIZE) {
-          toast.error(`File ${file.name} is too large. Please upload files smaller than 5MB.`, { autoClose: 10000 });
-          return;
+        const { width, height } = await getImageDimensions(file);
+        if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+          excludedFiles.push(file.name);
+          continue;
         }
+
         const compressedFile = await compressFile(file);
         compressedFiles.push(compressedFile);
       }
+
+      if (excludedFiles.length > 0) {
+        toast.error(`The following files were not uploaded due to high resolution: ${excludedFiles.join(', ')}.`, { autoClose: 10000 });
+      }
+
       setFiles(compressedFiles);
     } catch (error) {
       toast.error(`Compression error: ${error.message}`, { autoClose: 10000 });
@@ -188,6 +173,7 @@ const ImageUploader = () => {
       statuses.forEach(status => {
         if (status.status === 'SUCCEEDED') {
           toast.success(` ${status.fileName} with key ${status.key} processed successfully!`, { autoClose: 10000 });
+          setFiles([]);
         } else if (status.status === 'error') {
           toast.error(`Error processing  ${status.fileName} with key ${status.key}: ${status.error}`, { autoClose: 10000 });
         }
@@ -221,10 +207,9 @@ const ImageUploader = () => {
       </div>
       <div className='buttons-div'>
         <div>
-
-        <button className='custom-button' onClick={openFileDialog}>Choose Files </button>
-        <span>{files.length} file(s) selected</span>
-        <input id="fileInput" type="file" multiple accept="image/jpeg,image/png" style={{ display: 'none' }} onChange={handleFileChange} />
+          <button className='custom-button' onClick={openFileDialog}>Choose Files </button>
+          <span>{files.length} file(s) selected</span>
+          <input id="fileInput" type="file" multiple accept="image/jpeg,image/png" style={{ display: 'none' }} onChange={handleFileChange} />
         </div>
         
         <button className='custom-button' onClick={uploadFiles}>Upload Files</button>

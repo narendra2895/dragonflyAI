@@ -1,4 +1,4 @@
-require('dotenv').config( { path: '../.env' });
+require('dotenv').config({ path: '../.env' });
 
 const express = require('express');
 const cors = require('cors');
@@ -12,10 +12,8 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-
-
 const API_KEY = process.env.API_KEY;
-const BASE_URL = process.env.BASE_URL ;
+const BASE_URL = process.env.BASE_URL;
 
 app.post('/pipeline/assets/stage', async (req, res) => {
   const { count } = req.body;
@@ -73,6 +71,15 @@ app.post('/pipeline/assets/status', async (req, res) => {
       }
     });
     console.log('Status Response:', response.data);
+
+    // Extracting title from response
+    const title = response.data.title || 'status';
+
+    // Set headers to prompt file download
+    res.setHeader('Content-Disposition', `attachment; filename=${title}.json`);
+    res.setHeader('Content-Type', 'application/json');
+
+    // Send JSON response as a file
     res.json(response.data);
   } catch (error) {
     console.error('Error in /pipeline/assets/status:', error.message, error.response ? error.response.data : '');
@@ -85,8 +92,5 @@ app.post('/pipeline/assets/status', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  const x = process.env.API_KEY
-  const y = process.env.BASE_URL
-  console.log(x, 'is this /n ',y)
   console.log(`Server running on port ${PORT}`);
 });
