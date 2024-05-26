@@ -12,44 +12,69 @@ const ImageUploader = () => {
   const [errors, setErrors] = useState([]);
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB limit
   const MAX_WIDTH = 3000; // Maximum allowed width: 3000px
   const MAX_HEIGHT = 2000; // Maximum allowed height: 2000px
 
+  // Handle file input change event
   const handleFileChange = async (e) => {
     const selectedFiles = Array.from(e.target.files).filter(file => file.type.startsWith('image/'));
-    handleFiles(selectedFiles);
+    if (files.length > 0) {
+      confirmAlert({
+        title: 'Add or Discard Images',
+        message: 'Do you want to add the new images to the previously added images and keep them, or discard the previous images?',
+        buttons: [
+          { label: 'Add', onClick: () => handleFiles([...files, ...selectedFiles]) },
+          { label: 'Discard', onClick: () => handleFiles(selectedFiles) }
+        ]
+      });
+    } else {
+      handleFiles(selectedFiles);
+    }
   };
 
+  // Handle file drop event
   const handleDrop = (e) => {
     e.preventDefault();
     const droppedFiles = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
-    handleFiles(droppedFiles);
+    if (files.length > 0) {
+      confirmAlert({
+        title: 'Add or Discard Images',
+        message: 'Do you want to add the new images to the previously added images and keep them, or discard the previous images?',
+        buttons: [
+          { label: 'Add', onClick: () => handleFiles([...files, ...droppedFiles]) },
+          { label: 'Discard', onClick: () => handleFiles(droppedFiles) }
+        ]
+      });
+    } else {
+      handleFiles(droppedFiles);
+    }
   };
 
+  // Handle and compress files
   const handleFiles = async (selectedFiles) => {
-    setFiles([]); // Clear previous files
     const compressedFiles = [];
     const excludedFiles = [];
 
     const compressFile = (file) => new Promise((resolve, reject) => {
-      new Compressor(file, {
-        quality: 0.6, // Adjust the quality as needed (0.6 = 60% quality)
-        success: resolve,
-        error: reject
-      });
+      new Compressor(file, { quality: 0.6, success: resolve, error: reject });
     });
 
     const getImageDimensions = (file) => new Promise((resolve, reject) => {
       const img = new Image();
       img.src = URL.createObjectURL(file);
-      img.onload = () => {
-        resolve({ width: img.width, height: img.height });
-      };
+      img.onload = () => resolve({ width: img.width, height: img.height });
       img.onerror = reject;
     });
 
     try {
       for (const file of selectedFiles) {
+        if (file.size > MAX_FILE_SIZE) {
+          toast.error(`File ${file.name} is too large. Please upload files smaller than 5MB.`, { autoClose: 10000 });
+          continue;
+        }
+
         const { width, height } = await getImageDimensions(file);
         if (width > MAX_WIDTH || height > MAX_HEIGHT) {
           excludedFiles.push(file.name);
@@ -70,12 +95,13 @@ const ImageUploader = () => {
     }
   };
 
+  // Handle API errors
   const handleApiError = (error) => {
     const errorMessage = error.response?.data?.error || error.message;
-    console.error('API Error:', errorMessage);
     return errorMessage;
   };
 
+  // Upload files to the server
   const uploadFiles = async () => {
     setErrors([]);
     setResponses([]);
@@ -91,30 +117,18 @@ const ImageUploader = () => {
 
     try {
       const res = await axios.post('http://localhost:5173/pipeline/assets/stage', { count: files.length });
-      console.log('Stage Response:', res.data);
 
-      if (!res.data || !res.data.responses) {
-        throw new Error('Invalid response format from the server');
-      }
+      if (!res.data || !res.data.responses) throw new Error('Invalid response format from the server');
 
       const { responses: urlResponses } = res.data;
 
-      if (!Array.isArray(urlResponses)) {
-        throw new Error('urlResponses is not an array');
-      }
+      if (!Array.isArray(urlResponses)) throw new Error('urlResponses is not an array');
 
       const uploadPromises = files.map((file, index) => {
         const { url, key } = urlResponses[index];
-        return axios.put(url, file, {
-          headers: {
-            'Content-Type': file.type,
-          }
-        }).then(() => {
-          return { status: 'uploaded', key, fileName: file.name };
-        }).catch((error) => {
-          const errorMessage = handleApiError(error);
-          return { status: 'error', key, fileName: file.name, error: errorMessage };
-        });
+        return axios.put(url, file, { headers: { 'Content-Type': file.type } })
+          .then(() => ({ status: 'uploaded', key, fileName: file.name }))
+          .catch((error) => ({ status: 'error', key, fileName: file.name, error: handleApiError(error) }));
       });
 
       const uploadResults = await Promise.all(uploadPromises);
@@ -127,11 +141,9 @@ const ImageUploader = () => {
               key: result.key,
               pipeline: 'dragonfly-img-basic'
             });
-            console.log('Process Response:', processRes.data);
             return { ...result, taskId: processRes.data.taskId, status: 'running' };
           } catch (error) {
-            const errorMessage = handleApiError(error);
-            return { ...result, status: 'error', error: errorMessage };
+            return { ...result, status: 'error', error: handleApiError(error) };
           }
         }
         return result;
@@ -149,6 +161,7 @@ const ImageUploader = () => {
     }
   };
 
+  // Check the status of uploaded files
   const checkFileStatus = async (processResults, checkStatusInterval) => {
     const statusPromises = processResults.map(async (result) => {
       if (result.status === 'running') {
@@ -156,8 +169,7 @@ const ImageUploader = () => {
           const statusRes = await axios.post('http://localhost:5173/pipeline/assets/status', { taskId: result.taskId });
           return { ...result, status: statusRes.data.status };
         } catch (error) {
-          const errorMessage = handleApiError(error);
-          return { ...result, status: 'error', error: errorMessage };
+          return { ...result, status: 'error', error: handleApiError(error) };
         }
       }
       return result;
@@ -172,15 +184,16 @@ const ImageUploader = () => {
       setLoading(false);
       statuses.forEach(status => {
         if (status.status === 'SUCCEEDED') {
-          toast.success(` ${status.fileName} with key ${status.key} processed successfully!`, { autoClose: 10000 });
+          toast.success(`${status.fileName} with key ${status.key} processed successfully!`, { autoClose: 10000 });
           setFiles([]);
         } else if (status.status === 'error') {
-          toast.error(`Error processing  ${status.fileName} with key ${status.key}: ${status.error}`, { autoClose: 10000 });
+          toast.error(`Error processing ${status.fileName} with key ${status.key}: ${status.error}`, { autoClose: 10000 });
         }
       });
     }
   };
 
+  // Open file dialog
   const openFileDialog = () => {
     document.getElementById('fileInput').click();
   };
@@ -211,10 +224,8 @@ const ImageUploader = () => {
           <span>{files.length} file(s) selected</span>
           <input id="fileInput" type="file" multiple accept="image/jpeg,image/png" style={{ display: 'none' }} onChange={handleFileChange} />
         </div>
-        
         <button className='custom-button' onClick={uploadFiles}>Upload Files</button>
       </div>
-      
       {loading && (
         <div className="loading-overlay">
           <div className="spinner"></div>

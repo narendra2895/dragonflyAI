@@ -1,70 +1,143 @@
-# Getting Started with Create React App
+# Dragonfly Task
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Project Structure
 
-## Available Scripts
+<!-- dragonfly_task/
+├── node_modules/
+├── public/
+├── src/
+│ ├── components/
+│ │ ├── ImageUploader.css
+│ │ └── ImageUploader.jsx
+│ ├── App.css
+│ ├── App.js
+│ ├── App.test.js
+│ ├── index.css
+│ ├── index.js
+│ ├── logo-white.png
+│ ├── logo.svg
+│ ├── reportWebVitals.js
+│ └── setupTests.js
+├── api/
+│ ├── node_modules/
+│ ├── .env
+│ ├── package-lock.json
+│ ├── package.json
+│ └── server.js
+├── .env
+├── .gitignore
+├── package-lock.json
+├── package.json
+└── README.md -->
 
-In the project directory, you can run:
 
-### `npm start`
+## Image Uploader Component
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+The `ImageUploader` component allows users to upload image files with the following features:
+- Image compression before upload.
+- File size and resolution validation.
+- Supports drag-and-drop as well as file input selection.
+- Displays previews of selected images.
+- Uploads files to the server with a PUT request.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### `ImageUploader.jsx`
 
-### `npm test`
+This file contains the React component for image uploading. It uses several libraries:
+- `axios` for HTTP requests.
+- `compressorjs` for image compression.
+- `react-toastify` for toast notifications.
+- `react-confirm-alert` for confirmation dialogs.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### `ImageUploader.css`
 
-### `npm run build`
+This file contains the styling for the `ImageUploader` component.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Server
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+The `server.js` file sets up an Express server with the following features:
+- CORS support.
+- Environment variable configuration using `dotenv`.
+- API endpoints to interact with a remote server for staging, processing, and checking the status of uploaded images.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### `server.js`
 
-### `npm run eject`
+This file contains the server setup and three main endpoints:
+1. `/pipeline/assets/stage`: Stages assets in the pipeline.
+2. `/pipeline/assets/process`: Processes staged assets.
+3. `/pipeline/assets/status`: Checks the status of processed assets.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## Installation
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+To set up the project, follow these steps:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+1. Clone the repository:
+    ```bash
+    git clone <repository_url>
+    cd dragonfly_task
+    ```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+2. Install dependencies in the root directory:
+    ```bash
+    npm install
+    ```
 
-## Learn More
+3. Navigate to the `api` directory and install dependencies:
+    ```bash
+    cd api
+    npm install
+    ```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+4. Create a `.env` file in the root and add the necessary environment variables:
+    ```plaintext
+    API_KEY=your_api_key
+    BASE_URL=https://api.yourservice.com
+    ```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+5. Start the development server:
+    ```bash
+    npm start
+    ```
 
-### Code Splitting
+## Scripts
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+The `package.json` file includes several scripts:
 
-### Analyzing the Bundle Size
+- `start`: Concurrently starts the client and server.
+- `start-client`: Starts the React client.
+- `start-server`: Starts the Express server.
+- `build`: Builds the React application.
+- `test`: Runs the tests.
+- `eject`: Ejects the create-react-app configuration.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## Dependencies
 
-### Making a Progressive Web App
+The project has the following dependencies:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+### Frontend
 
-### Advanced Configuration
+- `axios`: ^1.7.2
+- `compressorjs`: ^1.2.1
+- `dotenv`: ^16.4.5
+- `react`: ^18.3.1
+- `react-confirm-alert`: ^3.0.6
+- `react-dom`: ^18.3.1
+- `react-toastify`: ^10.0.5
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+### Backend
 
-### Deployment
+- `aws-sdk`: ^2.1625.0
+- `axios`: ^1.7.2
+- `cors`: ^2.8.5
+- `dotenv`: ^16.4.5
+- `express`: ^4.19.2
+- `sharp`: ^0.33.4
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## Usage
 
-### `npm run build` fails to minify
+- To upload images, click "Choose Files" or drag and drop files into the specified area.
+- Selected files will be validated and compressed before upload.
+- The server handles the upload process and communicates with the remote API for staging, processing, and status checking.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## License
+
+This project is licensed under the ISC License.
