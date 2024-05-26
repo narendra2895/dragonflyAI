@@ -224,7 +224,7 @@ const ImageUploader = () => {
           <span>{files.length} file(s) selected</span>
           <input id="fileInput" type="file" multiple accept="image/jpeg,image/png" style={{ display: 'none' }} onChange={handleFileChange} />
         </div>
-        <button className='custom-button' onClick={uploadFiles}>Upload Files</button>
+        <button className='custom-button' onClick={uploadFiles}>Upload File(s)</button>
       </div>
       {loading && (
         <div className="loading-overlay">
